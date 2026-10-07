@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Million Income Calculator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+  --bg:#EEF2F1; --surface:#FFFFFF; --surface2:#F5F7F7; --ink:#13201E; --muted:#5A6866; --line:#D5DDDB;
+  --brand:#0D4A45; --brand-2:#0A3A36;
+  --c-agt:#2E5E8E; --c-um:#1B8A6B; --c-gm:#C08A1E;
+  --band-agt:rgba(46,94,142,.07); --band-um:rgba(27,138,107,.08); --band-gm:rgba(192,138,30,.10);
+  --focus:#2E5E8E; --grid:#E3E8E7;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0F1716; --surface:#16211F; --surface2:#1C2927; --ink:#E6EEEC; --muted:#9AAAA7; --line:#2A3836;
+    --brand:#0B3B37; --brand-2:#082D2A;
+    --c-agt:#6FA1D6; --c-um:#4CC39E; --c-gm:#E3B04B;
+    --band-agt:rgba(111,161,214,.08); --band-um:rgba(76,195,158,.08); --band-gm:rgba(227,176,75,.09);
+    --focus:#6FA1D6; --grid:#24312F;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0F1716; --surface:#16211F; --surface2:#1C2927; --ink:#E6EEEC; --muted:#9AAAA7; --line:#2A3836;
+  --brand:#0B3B37; --brand-2:#082D2A;
+  --c-agt:#6FA1D6; --c-um:#4CC39E; --c-gm:#E3B04B;
+  --band-agt:rgba(111,161,214,.08); --band-um:rgba(76,195,158,.08); --band-gm:rgba(227,176,75,.09);
+  --focus:#6FA1D6; --grid:#24312F;
+}
+*,*::before,*::after{box-sizing:inherit}
+html{height:100%;scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;min-height:100%;background:var(--bg);color:var(--ink);
+  font-family:Manrope,system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
+  font-size:16px;line-height:1.5;font-variant-numeric:tabular-nums;-webkit-text-size-adjust:100%}
+img,svg{max-width:100%}
+button{font:inherit}
+
+/* Header */
+.top{background:var(--brand);color:#fff;padding:22px 16px 0}
+.top-inner{max-width:960px;margin:0 auto}
+h1{font-size:clamp(1.55rem,5vw,2.3rem);font-weight:800;letter-spacing:-.02em;line-height:1.12;margin:0 0 6px}
+.sub{margin:0 0 18px;font-size:.95rem;color:rgba(255,255,255,.78);max-width:52ch}
+.tabs{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tab{background:transparent;border:0;color:rgba(255,255,255,.78);font-weight:700;font-size:.95rem;
+  padding:11px 16px;border-radius:12px 12px 0 0;cursor:pointer;white-space:nowrap}
+.tab:hover{color:#fff}
+.tab[aria-selected="true"]{background:var(--bg);color:var(--ink)}
+.tab:focus-visible{outline:2px solid #fff;outline-offset:-4px}
+
+main{max-width:960px;margin:0 auto;padding:20px 16px 110px}
+.panel[hidden]{display:none}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:18px}
+.stack>*+*{margin-top:16px}
+h2{font-size:1.15rem;font-weight:800;margin:0 0 4px;letter-spacing:-.01em}
+h3{font-size:1rem;font-weight:800;margin:0}
+p{margin:0}
+.muted{color:var(--muted)}
+.small{font-size:.85rem}
+
+/* Fields */
+.field{display:flex;flex-direction:column;gap:5px;font-size:.8rem;font-weight:700;color:var(--muted)}
+input{font:inherit;font-size:1rem;font-weight:600;color:var(--ink);background:var(--surface2);
+  border:1px solid var(--line);border-radius:9px;padding:9px 11px;width:100%;min-width:0;font-variant-numeric:tabular-nums}
+input:focus{outline:none;border-color:var(--focus)}
+input:focus-visible{outline:2px solid var(--focus);outline-offset:1px}
+.money,.pct{position:relative;display:block}
+.money::before{content:"RM";position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--muted);font-weight:600;pointer-events:none}
+.money input{padding-left:38px}
+.pct::after{content:"%";position:absolute;right:11px;top:50%;transform:translateY(-50%);color:var(--muted);font-weight:600;pointer-events:none}
+.pct input{padding-right:28px}
+.fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px}
+
+.btn{border:1px solid var(--line);background:var(--surface);color:var(--ink);font-weight:700;font-size:.9rem;
+  padding:9px 14px;border-radius:10px;cursor:pointer}
+.btn:hover{background:var(--surface2)}
+.btn:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+
+/* Setup row */
+.setup{display:flex;flex-wrap:wrap;gap:14px;align-items:flex-end;justify-content:space-between}
+.setup .field{width:150px}
+
+/* Summary */
+.total-label{font-size:.9rem;font-weight:700;color:var(--muted)}
+.total-big{font-size:clamp(2rem,8vw,3.2rem);font-weight:800;letter-spacing:-.03em;line-height:1.05;margin:2px 0 4px}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;margin:12px 0 4px;font-size:.85rem;font-weight:600;color:var(--muted)}
+.dot{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+.d-agt{background:var(--c-agt)} .d-um{background:var(--c-um)} .d-gm{background:var(--c-gm)}
+.chart{display:block;width:100%;height:auto;margin-top:6px}
+.chart text{font-family:inherit;fill:var(--muted);font-size:11px}
+.chart .gl{stroke:var(--grid);stroke-width:1}
+.chart .band-agt{fill:var(--band-agt)} .chart .band-um{fill:var(--band-um)} .chart .band-gm{fill:var(--band-gm)}
+.chart .lbl-agt{fill:var(--c-agt);font-weight:700} .chart .lbl-um{fill:var(--c-um);font-weight:700} .chart .lbl-gm{fill:var(--c-gm);font-weight:700}
+.chart .b-agt{fill:var(--c-agt)} .chart .b-um{fill:var(--c-um)} .chart .b-gm{fill:var(--c-gm)}
+.chart .b-y1{fill:var(--c-agt);opacity:.5} .chart .b-y2{fill:var(--c-agt)}
+.chart .empty{font-size:14px;font-weight:600}
+.chart .val{fill:var(--ink);font-weight:700;font-size:11px}
+
+/* Stage groups & year cards */
+.stage-group{--stage-c:var(--c-agt)}
+.stage-um{--stage-c:var(--c-um)}
+.stage-gm{--stage-c:var(--c-gm)}
+.stage-head{display:flex;align-items:baseline;flex-wrap:wrap;gap:4px 12px;margin:26px 2px 10px}
+.stage-head h3{color:var(--stage-c);font-size:1.05rem}
+.stage-years{color:var(--muted);font-weight:600;font-size:.9rem}
+.stage-total{margin-left:auto;font-weight:800}
+.year{background:var(--surface);border:1px solid var(--line);border-left:5px solid var(--stage-c);
+  border-radius:14px;padding:14px 16px}
+.year+.year{margin-top:10px}
+.year-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px}
+.yr{font-size:1.25rem;font-weight:800;letter-spacing:-.01em}
+.yr-total{font-size:1.1rem;font-weight:800}
+.breakdown{display:flex;flex-wrap:wrap;gap:4px 18px;margin-top:10px;font-size:.85rem;color:var(--muted);font-weight:600}
+.breakdown b{color:var(--ink);font-weight:700}
+
+/* Notes */
+.notes{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px;margin-top:26px}
+.guide{display:grid;grid-template-columns:auto 1fr;gap:4px 16px;margin:10px 0 0;font-size:.9rem}
+.guide dt{color:var(--muted);font-weight:600}
+.guide dd{margin:0;font-weight:700}
+.guide-rule{grid-column:1 / -1;border:0;border-top:1px solid var(--line);margin:6px 0;width:100%}
+
+/* Sticky total bar */
+.totalbar{position:fixed;left:0;right:0;bottom:0;z-index:5;background:var(--brand-2);color:#fff;
+  padding:12px 16px calc(12px + env(safe-area-inset-bottom,0px))}
+.totalbar[hidden]{display:none}
+.totalbar-inner{max-width:960px;margin:0 auto;display:flex;justify-content:space-between;align-items:baseline;gap:12px}
+.totalbar span{font-size:.9rem;color:rgba(255,255,255,.78);font-weight:600}
+.totalbar strong{font-size:1.3rem;font-weight:800}
+
+/* Power of One */
+.poo-inputs{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-top:12px}
+.years2{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px}
+.ysum h3{color:var(--muted);font-size:.95rem}
+.ysum .total-big{font-size:clamp(1.8rem,7vw,2.5rem)}
+.kv{display:grid;grid-template-columns:1fr auto;gap:6px 12px;margin-top:12px;font-size:.92rem}
+.kv dt{color:var(--muted);font-weight:600}
+.kv dd{margin:0;font-weight:700;text-align:right}
+.kv .em dd,.kv .em dt{color:var(--ink);font-weight:800}
+details summary{cursor:pointer;font-weight:700;padding:2px 0}
+details summary:focus-visible{outline:2px solid var(--focus);outline-offset:2px;border-radius:4px}
+.table-wrap{overflow-x:auto;margin-top:12px}
+table{border-collapse:collapse;width:100%;font-size:.9rem;min-width:380px}
+th,td{padding:7px 10px;text-align:right;border-bottom:1px solid var(--line);white-space:nowrap}
+th:first-child,td:first-child{text-align:left}
+th{color:var(--muted);font-weight:700;font-size:.8rem}
+tr.yr-break td{border-bottom:2px solid var(--line)}
+
+/* Rates */
+.rate-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px}
+.rate-card{border-top:5px solid var(--rc)}
+.rate-card p{margin:4px 0 12px;font-size:.88rem}
+.rate-rows{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.rate-foot{display:flex;justify-content:space-between;margin-top:14px;padding-top:10px;border-top:1px solid var(--line);font-weight:700}
+.combined{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-top:12px}
+.combined div{background:var(--surface2);border-radius:12px;padding:12px 14px}
+.combined span{display:block;font-size:.85rem;color:var(--muted);font-weight:600}
+.combined strong{font-size:1.4rem;font-weight:800}
+.row-between{display:flex;flex-wrap:wrap;gap:12px;justify-content:space-between;align-items:flex-start}
+
+@media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="top-inner">
+    <h1>Million Income Calculator</h1>
+    <p class="sub">Project insurance career income, from first sale to leading a group.</p>
+    <nav class="tabs" role="tablist" aria-label="Calculators">
+      <button class="tab" role="tab" id="tab-career" aria-controls="panel-career" data-tab="career">Career income</button>
+      <button class="tab" role="tab" id="tab-poo" aria-controls="panel-poo" data-tab="poo">Power of One Policy</button>
+      <button class="tab" role="tab" id="tab-rates" aria-controls="panel-rates" data-tab="rates">Commission rates</button>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <!-- Career income -->
+  <section class="panel" id="panel-career" role="tabpanel" aria-labelledby="tab-career">
+    <div class="stack">
+      <div class="card setup">
+        <label class="field">Starting year
+          <input id="startYear" type="number" inputmode="numeric" min="1990" max="2100" step="1">
+        </label>
+        <p class="muted small" style="flex:1;min-width:200px">8 years: 2 as Agent, 3 as Unit Manager (UM), 3 as Group Manager (GM). Enter annual sales for each year below.</p>
+        <button class="btn" id="clearCareer" type="button">Clear figures</button>
+      </div>
+
+      <div class="card">
+        <p class="total-label" id="totalLabel">Total income</p>
+        <p class="total-big" id="grandTotal">RM0</p>
+        <div class="legend">
+          <span><i class="dot d-agt"></i>Personal sales</span>
+          <span><i class="dot d-um"></i>Direct unit</span>
+          <span><i class="dot d-gm"></i>Whole group</span>
+        </div>
+        <svg class="chart" id="careerChart" viewBox="0 0 640 250" role="img" aria-label="Commission by year"></svg>
+      </div>
+    </div>
+
+    <div id="years"></div>
+
+    <div class="notes">
+      <div class="card">
+        <h3>Production guideline</h3>
+        <dl class="guide">
+          <dt>3 months</dt><dd>RM30,000</dd>
+          <dt>4 months</dt><dd>RM60,000</dd>
+          <dt>5 months</dt><dd>RM100,000</dd>
+          <hr class="guide-rule">
+          <dt>Year 1</dt><dd>RM200,000</dd>
+          <dt>Year 2</dt><dd>RM300,000</dd>
+          <dt>Year 3</dt><dd>RM400,000</dd>
+        </dl>
+      </div>
+      <div class="card">
+        <h3>How it's calculated</h3>
+        <p class="muted small" style="margin-top:8px">Each year's sales keep paying commission in later years at the renewal rates. Direct unit overrides use the rate for the stage the sales were made in. Balance scorecard and PR are not included and are assumed to average out.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Power of One -->
+  <section class="panel" id="panel-poo" role="tabpanel" aria-labelledby="tab-poo" hidden>
+    <div class="stack">
+      <div class="card">
+        <h2>Power of One Policy</h2>
+        <p class="muted small">Small monthly-premium cases, closed steadily, stack into a growing monthly income.</p>
+        <div class="poo-inputs">
+          <label class="field">Monthly premium per case
+            <span class="money"><input id="premium" inputmode="decimal" autocomplete="off"></span>
+          </label>
+        </div>
+        <p class="field" style="margin-top:14px">Cases closed per month</p>
+        <div class="poo-inputs" id="caseInputs" style="margin-top:6px"></div>
+        <p class="muted small" id="pooRateNote" style="margin-top:12px"></p>
+      </div>
+
+      <div class="card">
+        <p class="total-label">Monthly commission, month 1 to 24</p>
+        <svg class="chart" id="pooChart" viewBox="0 0 640 230" role="img" aria-label="Monthly commission over 24 months"></svg>
+      </div>
+
+      <div class="years2" id="pooYears"></div>
+
+      <div class="card">
+        <details>
+          <summary>Month-by-month breakdown</summary>
+          <div class="table-wrap"><table id="pooTable"></table></div>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <!-- Rates -->
+  <section class="panel" id="panel-rates" role="tabpanel" aria-labelledby="tab-rates" hidden>
+    <div class="stack">
+      <div class="card row-between">
+        <div style="max-width:60ch">
+          <h2>Commission rates</h2>
+          <p class="muted small">Both calculators use these rates. Changes are saved on this device.</p>
+        </div>
+        <button class="btn" id="resetRates" type="button">Restore default rates</button>
+      </div>
+      <div class="rate-grid" id="rateGrid"></div>
+      <div class="card">
+        <h3>Combined totals</h3>
+        <p class="muted small" style="margin-top:4px">Personal sales rates plus each stage's overrides.</p>
+        <div class="combined">
+          <div><span>Agent</span><strong id="cmbAgt"></strong></div>
+          <div><span>Unit Manager (UM)</span><strong id="cmbUm"></strong></div>
+          <div><span>Group Manager (GM)</span><strong id="cmbGm"></strong></div>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<div class="totalbar" id="totalbar">
+  <div class="totalbar-inner"><span id="barLabel">Total income</span><strong id="barTotal">RM0</strong></div>
+</div>
+
+<script>
+(function(){
+  var KEY = 'million-income-calc-v1';
+  var DEF = {
+    tab: 'career',
+    startYear: 2026,
+    ps: [0,0,0,0,0,0,0,0],
+    du: [0,0,0,0,0,0,0,0],
+    wg: [0,0,0,0,0,0,0,0],
+    rates: { agt:[28,28,15.5,15.5,15,15], um:[8.4,8.4,2.85,4.5], gm:[14,14,4.5,4.5], wg:[3,3] },
+    poo: { premium:300, cases:[1,2,3,4] }
+  };
+  var STAGES = ['agt','agt','um','um','um','gm','gm','gm'];
+  var GROUPS = [['agt',0,2,'Agent'],['um',2,5,'Unit Manager (UM)'],['gm',5,8,'Group Manager (GM)']];
+
+  function clone(o){ return JSON.parse(JSON.stringify(o)); }
+  function isNumArr(a,len){ return Array.isArray(a) && a.length===len && a.every(function(x){return typeof x==='number' && isFinite(x);}); }
+
+  function load(){
+    var s = clone(DEF);
+    try{
+      var raw = localStorage.getItem(KEY);
+      if(!raw) return s;
+      var d = JSON.parse(raw);
+      if(d && typeof d==='object'){
+        if(['career','poo','rates'].indexOf(d.tab)>=0) s.tab = d.tab;
+        if(typeof d.startYear==='number' && isFinite(d.startYear)) s.startYear = d.startYear;
+        ['ps','du','wg'].forEach(function(k){ if(isNumArr(d[k],8)) s[k]=d[k]; });
+        if(d.rates){ Object.keys(s.rates).forEach(function(k){ if(isNumArr(d.rates[k], s.rates[k].length)) s.rates[k]=d.rates[k]; }); }
+        if(d.poo){
+          if(typeof d.poo.premium==='number' && isFinite(d.poo.premium)) s.poo.premium = d.poo.premium;
+          if(isNumArr(d.poo.cases,4)) s.poo.cases = d.poo.cases;
+        }
+      }
+    }catch(e){}
+    return s;
+  }
+  var S = load();
+  function save(){ try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){} }
+
+  function $(sel){ return document.querySelector(sel); }
+  function num(v){ var n = parseFloat(String(v).replace(/[^0-9.\-]/g,'')); return isFinite(n) ? n : 0; }
+  function money(n){ var r = Math.round(n); return (r<0?'-RM':'RM') + Math.abs(r).toLocaleString('en-US'); }
+  function fmtIn(n){ return n ? n.toLocaleString('en-US',{maximumFractionDigits:2}) : ''; }
+  function pct(n){ return (Math.round(n*10000)/10000).toString() + '%'; }
+  function sum(a){ return a.reduce(function(x,y){return x+y;},0); }
+  function short(n){
+    if(n>=1e6) return 'RM' + (Math.round(n/1e5)/10) + 'M';
+    if(n>=1e3) return 'RM' + (Math.round(n/100)/10) + 'k';
+    return 'RM' + Math.round(n);
+  }
+  function niceMax(v){
+    if(v<=0) return 1;
+    var p = Math.pow(10, Math.floor(Math.log10(v))), m = v/p;
+    var n = m<=1?1 : m<=2?2 : m<=2.5?2.5 : m<=5?5 : 10;
+    return n*p;
+  }
+  function esc(s){ return String(s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); }
+
+  /* ---------- Tabs ---------- */
+  function showTab(t){
+    document.querySelectorAll('.tab').forEach(function(b){ b.setAttribute('aria-selected', b.dataset.tab===t ? 'true':'false'); });
+    ['career','poo','rates'].forEach(function(k){ document.getElementById('panel-'+k).hidden = (k!==t); });
+    $('#totalbar').hidden = (t!=='career');
+    S.tab = t; save();
+  }
+  document.querySelectorAll('.tab').forEach(function(b){ b.addEventListener('click', function(){ showTab(b.dataset.tab); }); });
+
+  /* ---------- Career income ---------- */
+  function calcCareer(){
+    var r = S.rates, agt = r.agt.map(function(x){return x/100;}), um = r.um.map(function(x){return x/100;}),
+        gm = r.gm.map(function(x){return x/100;}), wg = r.wg.map(function(x){return x/100;});
+    var rows = [];
+    for(var t=0;t<8;t++){
+      var personal=0, direct=0, group=0, k, j;
+      for(k=0;k<agt.length;k++){ j=t-k; if(j>=0) personal += S.ps[j]*agt[k]; }
+      for(k=0;k<4;k++){
+        j=t-k; if(j<0) continue;
+        if(STAGES[j]==='um') direct += S.du[j]*(um[k]||0);
+        else if(STAGES[j]==='gm') direct += S.du[j]*(gm[k]||0);
+      }
+      for(k=0;k<wg.length;k++){ j=t-k; if(j>=0 && STAGES[j]==='gm') group += S.wg[j]*wg[k]; }
+      rows.push({personal:personal, direct:direct, group:group, total:personal+direct+group});
+    }
+    return rows;
+  }
+
+  function moneyField(label, k, i){
+    return '<label class="field"><span>'+label+'</span><span class="money"><input inputmode="decimal" autocomplete="off" placeholder="0" data-k="'+k+'" data-i="'+i+'" value="'+fmtIn(S[k][i])+'"></span></label>';
+  }
+
+  function buildCareer(){
+    var wrap = $('#years'); wrap.innerHTML = '';
+    GROUPS.forEach(function(g){
+      var st=g[0], a=g[1], b=g[2];
+      var sec = document.createElement('section');
+      sec.className = 'stage-group stage-'+st;
+      var html = '<div class="stage-head"><h3>'+g[3]+'</h3><span class="stage-years" data-a="'+a+'" data-b="'+b+'"></span><span class="stage-total" id="st-'+st+'"></span></div>';
+      for(var i=a;i<b;i++){
+        var f = moneyField('Personal sales','ps',i);
+        if(st!=='agt') f += moneyField('Direct unit sales','du',i);
+        if(st==='gm') f += moneyField('Whole group sales','wg',i);
+        html += '<div class="year"><div class="year-head"><span class="yr" data-i="'+i+'"></span><span class="yr-total" id="yt-'+i+'"></span></div><div class="fields">'+f+'</div><div class="breakdown" id="bd-'+i+'"></div></div>';
+      }
+      sec.innerHTML = html;
+      wrap.appendChild(sec);
+    });
+    wrap.querySelectorAll('input[data-k]').forEach(function(inp){
+      var k=inp.dataset.k, i=+inp.dataset.i;
+      inp.setAttribute('aria-label', inp.closest('label').firstChild.textContent + ', year ' + (i+1));
+      inp.addEventListener('input', function(){ S[k][i] = num(inp.value); updateCareer(); save(); });
+      inp.addEventListener('blur', function(){ inp.value = fmtIn(S[k][i]); });
+    });
+    updateYearLabels();
+  }
+
+  function updateYearLabels(){
+    var y0 = S.startYear;
+    document.querySelectorAll('.yr[data-i]').forEach(function(el){ el.textContent = y0 + (+el.dataset.i); });
+    document.querySelectorAll('.stage-years').forEach(function(el){
+      el.textContent = (y0 + (+el.dataset.a)) + ' to ' + (y0 + (+el.dataset.b) - 1);
+    });
+    var label = 'Total income, ' + y0 + ' to ' + (y0+7);
+    $('#totalLabel').textContent = label;
+    $('#barLabel').textContent = label;
+  }
+
+  function updateCareer(){
+    var rows = calcCareer();
+    var stTot = {agt:0, um:0, gm:0};
+    rows.forEach(function(r,i){
+      var st = STAGES[i];
+      stTot[st] += r.total;
+      $('#yt-'+i).textContent = money(r.total);
+      var parts = '<span><i class="dot d-agt"></i>Personal <b>'+money(r.personal)+'</b></span>';
+      if(st!=='agt') parts += '<span><i class="dot d-um"></i>Direct unit <b>'+money(r.direct)+'</b></span>';
+      if(st==='gm') parts += '<span><i class="dot d-gm"></i>Whole group <b>'+money(r.group)+'</b></span>';
+      $('#bd-'+i).innerHTML = parts;
+    });
+    Object.keys(stTot).forEach(function(k){ $('#st-'+k).textContent = money(stTot[k]); });
+    var grand = sum(rows.map(function(r){return r.total;}));
+    $('#grandTotal').textContent = money(grand);
+    $('#barTotal').textContent = money(grand);
+    drawCareer(rows);
+  }
+
+  function drawCareer(rows){
+    var W=640,H=250,L=50,R=8,T=28,B=28, n=8, cw=(W-L-R)/n, bw=Math.min(44, cw*0.58), ph=H-T-B;
+    var max = niceMax(Math.max.apply(null, rows.map(function(r){return r.total;})));
+    var empty = rows.every(function(r){return r.total===0;});
+    var s = '';
+    GROUPS.forEach(function(g){
+      var x=L+g[1]*cw, w=(g[2]-g[1])*cw;
+      s += '<rect class="band-'+g[0]+'" x="'+x+'" y="0" width="'+w+'" height="'+(H-B)+'" rx="6"/>';
+      s += '<text class="lbl-'+g[0]+'" x="'+(x+w/2)+'" y="16" text-anchor="middle">'+g[3].replace(/ \(.*\)/,'')+'</text>';
+    });
+    for(var gi=0; gi<=4; gi++){
+      var v = max*gi/4, y = T + ph*(1-gi/4);
+      s += '<line class="gl" x1="'+L+'" x2="'+(W-R)+'" y1="'+y+'" y2="'+y+'"/>';
+      if(!empty) s += '<text x="'+(L-6)+'" y="'+(y+4)+'" text-anchor="end">'+short(v)+'</text>';
+    }
+    rows.forEach(function(r,i){
+      var x = L + i*cw + (cw-bw)/2, base = T+ph;
+      [['personal','b-agt'],['direct','b-um'],['group','b-gm']].forEach(function(p){
+        var h = r[p[0]]/max*ph;
+        if(h>0){ s += '<rect class="'+p[1]+'" x="'+x+'" y="'+(base-h)+'" width="'+bw+'" height="'+h+'"><title>'+money(r[p[0]])+'</title></rect>'; base -= h; }
+      });
+      s += '<text x="'+(L+i*cw+cw/2)+'" y="'+(H-8)+'" text-anchor="middle">'+(S.startYear+i)+'</text>';
+    });
+    if(empty) s += '<text class="empty" x="'+(L+(W-L-R)/2)+'" y="'+(T+ph/2+5)+'" text-anchor="middle">Enter sales figures below to see the projection</text>';
+    $('#careerChart').innerHTML = s;
+  }
+
+  $('#startYear').value = S.startYear;
+  $('#startYear').addEventListener('input', function(){
+    var v = parseInt(this.value,10);
+    if(isFinite(v) && v>=1900 && v<=2200){ S.startYear = v; updateYearLabels(); updateCareer(); save(); }
+  });
+  $('#startYear').addEventListener('blur', function(){ this.value = S.startYear; });
+  $('#clearCareer').addEventListener('click', function(){
+    if(!confirm('Clear all sales figures?')) return;
+    S.ps=[0,0,0,0,0,0,0,0]; S.du=[0,0,0,0,0,0,0,0]; S.wg=[0,0,0,0,0,0,0,0];
+    buildCareer(); updateCareer(); save();
+  });
+
+  /* ---------- Power of One ---------- */
+  var BLOCKS = ['Months 1 to 6','Months 7 to 12','Months 13 to 18','Months 19 to 24'];
+  function buildPoo(){
+    $('#premium').value = fmtIn(S.poo.premium);
+    $('#premium').addEventListener('input', function(){ S.poo.premium = num(this.value); updatePoo(); save(); });
+    $('#premium').addEventListener('blur', function(){ this.value = fmtIn(S.poo.premium); });
+    var html = '';
+    BLOCKS.forEach(function(b,i){
+      html += '<label class="field">'+b+'<input type="number" inputmode="numeric" min="0" step="1" data-b="'+i+'" value="'+S.poo.cases[i]+'"></label>';
+    });
+    $('#caseInputs').innerHTML = html;
+    $('#caseInputs').querySelectorAll('input').forEach(function(inp){
+      var i=+inp.dataset.b;
+      inp.addEventListener('input', function(){ S.poo.cases[i] = Math.max(0, num(inp.value)); updatePoo(); save(); });
+      inp.addEventListener('blur', function(){ inp.value = S.poo.cases[i]; });
+    });
+  }
+
+  function calcPoo(){
+    var agt = S.rates.agt.map(function(x){return x/100;});
+    var p = S.poo.premium, newCases=[], inForce=[], income=[], cum=0;
+    for(var m=0;m<24;m++){ newCases[m] = S.poo.cases[Math.floor(m/6)]; cum += newCases[m]; inForce[m]=cum; }
+    for(m=0;m<24;m++){
+      var inc = 0;
+      for(var s=0;s<=m;s++){ inc += newCases[s]*p*(agt[Math.floor((m-s)/12)]||0); }
+      income[m] = inc;
+    }
+    var years = [0,1].map(function(y){
+      var cases = sum(newCases.slice(y*12,y*12+12));
+      var anp = p*12*cases;
+      return { cash: sum(income.slice(y*12,y*12+12)), cases: cases, anp: anp, lifetime: anp*sum(agt) };
+    });
+    return {newCases:newCases, inForce:inForce, income:income, years:years, agtTotal:sum(S.rates.agt)};
+  }
+
+  function updatePoo(){
+    var d = calcPoo();
+    var r = S.rates.agt;
+    $('#pooRateNote').textContent = 'Commission uses the personal sales rates: ' + pct(r[0]) + ' in a case\u2019s first year and ' + pct(r[1]) + ' in its second. Edit them under Commission rates.';
+    var html = '';
+    d.years.forEach(function(y,i){
+      html += '<div class="card ysum"><h3>Year '+(i+1)+' (months '+(i*12+1)+' to '+(i*12+12)+')</h3>'+
+        '<p class="total-label" style="margin-top:10px">Commission received this year</p><p class="total-big">'+money(y.cash)+'</p>'+
+        '<dl class="kv"><dt>Cases closed</dt><dd>'+y.cases.toLocaleString('en-US')+'</dd>'+
+        '<dt>Annualised premium (ANP)</dt><dd>'+money(y.anp)+'</dd>'+
+        '<div class="em" style="display:contents"><dt>Total commission on these cases over 6 years ('+pct(d.agtTotal)+' of ANP)</dt><dd>'+money(y.lifetime)+'</dd></div></dl></div>';
+    });
+    $('#pooYears').innerHTML = html;
+
+    var t = '<thead><tr><th>Month</th><th>New cases</th><th>Cases in force</th><th>Commission</th></tr></thead><tbody>';
+    for(var m=0;m<24;m++){
+      t += '<tr'+(m===11?' class="yr-break"':'')+'><td>'+(m+1)+'</td><td>'+d.newCases[m]+'</td><td>'+d.inForce[m]+'</td><td>'+money(d.income[m])+'</td></tr>';
+    }
+    t += '</tbody>';
+    $('#pooTable').innerHTML = t;
+    drawPoo(d.income);
+  }
+
+  function drawPoo(income){
+    var W=640,H=230,L=50,R=8,T=26,B=26, n=24, cw=(W-L-R)/n, bw=cw*0.68, ph=H-T-B;
+    var max = niceMax(Math.max.apply(null, income));
+    var empty = income.every(function(v){return v===0;});
+    var s='';
+    for(var gi=0; gi<=4; gi++){
+      var v=max*gi/4, y=T+ph*(1-gi/4);
+      s += '<line class="gl" x1="'+L+'" x2="'+(W-R)+'" y1="'+y+'" y2="'+y+'"/>';
+      if(!empty) s += '<text x="'+(L-6)+'" y="'+(y+4)+'" text-anchor="end">'+short(v)+'</text>';
+    }
+    income.forEach(function(v,m){
+      var h=v/max*ph, x=L+m*cw+(cw-bw)/2;
+      if(h>0) s += '<rect class="'+(m<12?'b-y1':'b-y2')+'" x="'+x+'" y="'+(T+ph-h)+'" width="'+bw+'" height="'+h+'" rx="2"><title>M'+(m+1)+': '+money(v)+'</title></rect>';
+      if((m+1)%6===0) s += '<text x="'+(L+m*cw+cw/2)+'" y="'+(H-8)+'" text-anchor="middle">M'+(m+1)+'</text>';
+      if((m===11||m===23) && v>0) s += '<text class="val" x="'+(L+m*cw+cw/2)+'" y="'+(T+ph-h-6)+'" text-anchor="'+(m===23?'end':'middle')+'">'+money(v)+'/mth</text>';
+    });
+    if(empty) s += '<text class="empty" x="'+(L+(W-L-R)/2)+'" y="'+(T+ph/2+5)+'" text-anchor="middle">Enter a premium and cases to see the build-up</text>';
+    $('#pooChart').innerHTML = s;
+  }
+
+  /* ---------- Rates ---------- */
+  var RATE_GROUPS = [
+    ['agt','Personal sales','Paid at every stage on the agent\u2019s own sales.','--c-agt'],
+    ['um','Unit Manager direct unit','Override on direct unit sales made while a Unit Manager.','--c-um'],
+    ['gm','Group Manager direct unit','Override on direct unit sales made while a Group Manager.','--c-gm'],
+    ['wg','Group Manager whole group','Override on whole group sales.','--c-gm']
+  ];
+  function buildRates(){
+    var html='';
+    RATE_GROUPS.forEach(function(g){
+      var k=g[0];
+      html += '<div class="card rate-card" style="--rc:var('+g[3]+')"><h3>'+g[1]+'</h3><p class="muted">'+g[2]+'</p><div class="rate-rows">';
+      S.rates[k].forEach(function(v,i){
+        html += '<label class="field">Year '+(i+1)+'<span class="pct"><input inputmode="decimal" autocomplete="off" data-g="'+k+'" data-i="'+i+'" value="'+v+'" aria-label="'+esc(g[1])+' year '+(i+1)+' rate"></span></label>';
+      });
+      html += '</div><div class="rate-foot"><span class="muted">Total</span><span id="rt-'+k+'"></span></div></div>';
+    });
+    $('#rateGrid').innerHTML = html;
+    $('#rateGrid').querySelectorAll('input').forEach(function(inp){
+      var k=inp.dataset.g, i=+inp.dataset.i;
+      inp.addEventListener('input', function(){ S.rates[k][i] = num(inp.value); updateRates(); updateCareer(); updatePoo(); save(); });
+      inp.addEventListener('blur', function(){ inp.value = S.rates[k][i]; });
+    });
+    updateRates();
+  }
+  function updateRates(){
+    var t = {}; Object.keys(S.rates).forEach(function(k){ t[k]=sum(S.rates[k]); $('#rt-'+k).textContent = pct(t[k]); });
+    $('#cmbAgt').textContent = pct(t.agt);
+    $('#cmbUm').textContent = pct(t.agt + t.um);
+    $('#cmbGm').textContent = pct(t.agt + t.gm + t.wg);
+  }
+  $('#resetRates').addEventListener('click', function(){
+    if(!confirm('Restore the default commission rates?')) return;
+    S.rates = clone(DEF.rates); buildRates(); updateCareer(); updatePoo(); save();
+  });
+
+  /* ---------- Init ---------- */
+  buildCareer(); updateCareer();
+  buildPoo(); updatePoo();
+  buildRates();
+  showTab(S.tab);
+})();
+</script>
+</body>
+</html>
